@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="author" content="wuqingtao@sf-express.com">
+	<title>山东片区网络监控报警系统-日志</title>
+	<link href="static/bootstrap/css/bootstrap.min.css" rel="stylesheet"> 
+	<style>
+		body {
+			margin:0 auto;
+			padding-right: 15px;
+			padding-left: 15px;
+			font-family: 微软雅黑;
+			
+			background-color: #fefefe;
+		}
+		.up {
+			color: rgb(34, 151, 123);
+		}
+		.warn {
+			color: darkorange;
+		}
+		.error {
+			color: red;
+		}
+		.fontsize {
+			font-size: 110%;
+		}
+		.margin_top {
+			margin-top: 66px;
+		}
+	</style>
+</head>
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top fontsize">
+    <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="index.html"><strong>山东片区网络监控报警系统</strong></a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse pull-right">
+          <ul class="nav navbar-nav">    
+            <li><a href="index.html">最新</a></li>
+			<li><a href="admin.html">管理</a></li>
+            <li class="active"><a href="logs.html">日志</a></li>
+          </ul>
+        </div>
+    </div>
+</nav>
+<div class="container margin_top" id="context">
+	<legend style="margin-bottom: 7px; padding-left: 5px;">监控日志</legend>
+	<div class="row">
+        <div class="col-xs-2 pull-right">
+            <button id="ping" class="btn btn-default">ping</button>
+            <button id="http" class="btn btn-default">http</button>
+        </div>
+        <div class="col-xs-10">
+            <pre style="background-color: #FFF; border: none;" id="httplog"><code></code>
+            </pre>
+        </div>
+        <div class="col-xs-10">
+            <pre style="background-color: #FFF; border: none;" id="pinglog"><code></code>
+            </pre>
+        </div>
+	</div>
+</div>
+<script src="static/jquery.min.js"></script>
+<script src="static/bootstrap/js/bootstrap.min.js"></script>
+<script>
+    function getpinglog() {
+        $("#pinglog").show();
+        $("#httplog").hide();
+        var pingLog = $.get("logs/ping", function(data) {
+            $("#pinglog>code").html(data);
+        });
+        pingLog.fail(function(data) {
+            $("#pinglog>code").html(data);
+        });
+    }
+    function gethttplog() {
+        $("#pinglog").hide();
+        $("#httplog").show();
+        var httpLog = $.get("logs/http", function(data) {
+            $("#httplog>code").html(data);
+        });
+        httpLog.fail(function(data) {
+            $("#httplog>code").html(data);
+        });
+    }
+    $(document).ready(function() {
+        getpinglog();
+        $("#ping").click(getpinglog);
+        $("#http").click(gethttplog);
+    });
+</script>
+</body>
+</html>

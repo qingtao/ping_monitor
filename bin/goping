@@ -1,0 +1,93 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:          monitor
+# Required-Start:    $remote_fs
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: monitor check the hosts online or not.
+# Description:       monitor check every host 120s/times, sendmail if status changed.
+### END INIT INFO
+
+. /lib/lsb/init-functions
+
+BASE="/usr/local/monitor"
+PINGPID="${BASE}/tmp/ping.pid"
+HTTPPID="${BASE}/tmp/http.pid"
+NAME="monitor"
+
+do_status() {
+    if test -f $1; then
+        pid=`cat $1`
+        comm=`ps --no-heading -p $pid -o comm`
+        if test a$comm = a$NAME; then
+            return 0
+        else
+            return 1
+        fi
+    fi
+    return 10
+}
+
+case $1 in
+    start)
+        if do_status $HTTPPID; then
+            log_warning_msg "$0 http already running"
+            exit 0
+        fi
+        if do_status $PINGPID; then
+            log_warning_msg "$0 ping already running"
+            exit 0
+        fi
+        ${BASE}/$NAME http > /dev/null 2>&1 &
+        sleep 3
+        if do_status $HTTPPID; then
+            log_success_msg "Start $NAME http"
+            exit 0
+        fi
+        log_failure_msg "Start $NAME http"
+        exit 1
+        ;;
+    stop)
+        if do_status $HTTPPID -o do_status $PINGPID; then
+            pidh=`cat $HTTPPID`
+            pidp=`cat $PINGPID`
+            kill $pidh $pidp
+            sleep 2
+            commh=`ps --no-heading -p $pidh -o comm`
+            commp=`ps --no-heading -p $pidp -o comm`
+            if test x$commh = x -o y$commp = y; then
+                rm -f $HTTPPID $PINGPID
+                log_success_msg "Stop $NAME"
+                exit 0
+            else
+                log_failure_msg "Stop $NAME"
+                exit 1
+            fi
+        fi
+        log_warning_msg "$NAME not running"
+        exit 0
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    status)
+        if do_status $HTTPPID; then
+            log_success_msg "$NAME http is running: `cat $HTTPPID`"
+        else
+            log_warning_msg "$NAME http not running"
+        fi
+        if do_status $PINGPID; then
+            log_success_msg "$NAME ping is running: `cat $PINGPID`"
+        else
+            log_warning_msg "$NAME ping not running"
+        fi
+        ;;
+    *)
+        echo "Usage: $NAME (start|stop|restart|status)"
+        exit 1
+esac
+
+

@@ -1,0 +1,14 @@
+{
+  "debug": false,
+  "heartbeat": "baidu.com",
+  "interval": "30s",
+  "times": "3",
+  "relay_time": 30,
+  "mail": {
+    "rcpt_to": "to@example.com",
+    "mail_from": "send@example.com",
+    "secret": "password",
+    "smtp_server": "smtp.example.com",
+    "smtp_port": "25"
+  }
+}

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="author" content="wuqingtao@sf-express.com">
+	<title>山东片区网络监控报警系统-当前状态</title>
+	<link href="static/bootstrap/css/bootstrap.min.css" rel="stylesheet"> 
+	<style>
+		body {
+			margin:0 auto;
+			padding-right: 15px;
+			padding-left: 15px;
+			font-family: 微软雅黑;
+			
+			background-color: #fefefe;
+		}
+		.up {
+			color: rgb(34, 151, 123);
+		}
+		.warn {
+			color: darkorange;
+		}
+		.error {
+			color: red;
+		}
+		.fontsize {
+			font-size: 110%;
+		}
+		.margin_top {
+			margin-top: 66px;
+		}
+	</style>
+</head>
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top fontsize">
+    <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="index.html"><strong>山东片区网络监控报警系统</strong></a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse pull-right">
+          <ul class="nav navbar-nav">    
+            <li class="active"><a href="index.html">最新</a></li>
+			<li><a href="admin.html">管理</a></li>
+            <li><a href="logs.html">日志</a></li>
+          </ul>
+        </div>
+    </div>
+</nav>
+<div class="container margin_top" id="context">
+	<legend style="margin-bottom: 7px; padding-left: 5px;">当前状态</legend>
+	<div class="row">
+        <div class="col-xs-10" id="groups"></div>
+        <div class="col-xs-2" id="gs" style="word-wrap:break-word;">
+            <div>
+                <p>
+                    <span>在线/总数: </span>
+                    <span id="ooa"></span>
+                </p>
+                <p id="oodp">
+                    <span>离线: </span>
+                    <span id="ood" style="padding: 0 50% 0 0; cursor: pointer; color: red;"></span>
+                </p>
+                <p>
+                    <span>过滤：</span>
+                    <select name="areas" id="areas"></select>
+                </p>
+            </div>
+        </div>
+	</div>
+</div>
+<script src="static/jquery.min.js"></script>
+<script src="static/bootstrap/js/bootstrap.min.js"></script>
+<script>
+function format(a) {
+	if (a < 10) {
+		return '0' + a;
+	}
+	return a;
+};
+
+function host(area ,name, addr, rtt, failed, time, status) {
+	tr_pre = '<tr>'
+	
+	if (failed > 0 || rtt == null) {
+		if (status == true) {
+		    tr_pre = '<tr class="warn">';
+			st = '<td>up</td>';
+		} else {
+			tr_pre = '<tr class="error">';
+			st = '<td>down</td>';
+		}
+		if (rtt == undefined) {
+			failed = "-"
+		}
+		if (failed >= 15) {
+			failed = '>15';
+		}
+		s = tr_pre +
+			'<td>' + area + '</td>' + 
+			'<td>' + name + '</td>' + 
+			'<td>' + addr + '</td>' + 
+			'<td> failed times: ' + failed + '</td>' + 
+			'<td>' + time + '</td>' + 
+			st +
+			'</tr>';
+	} else {
+		st = '<td class="up">up</td>';
+        rtt = rtt.replace(/\.\d+/, '');
+        //console.log(rtt.replace(/\.\d+/, ''));
+		s = tr_pre +
+			'<td>' + area + '</td>' + 
+			'<td>' + name + '</td>' + 
+			'<td>' + addr + '</td>' + 
+			'<td>' + rtt + '</td>' + 
+			'<td>' + time + '</td>' + 
+			st +
+			'</tr>';
+	}
+	return s;
+}
+
+function splitByArea(h) {
+    var groups = {};
+    var len = h.length;
+    for (var i=0; i<len; i++) {
+        if (groups[h[i].area] == undefined) {
+            var list = [];
+            list.push(h[i]);
+            groups[h[i].area] = list;
+        } else {
+            groups[h[i].area].push(h[i]);
+        }
+    }
+    return groups;
+}
+
+function parseTime(time) {
+    date = new Date(time);
+	year = date.getFullYear();
+	month = date.getMonth() + 1;
+	day = date.getDate();
+	hour = date.getHours();
+	minute = date.getMinutes();
+	second = date.getSeconds();
+	if (year == 1) {
+		time = 'failed when monitor starting';
+	} else {
+    	time = year + '-' + format(month) + '-' + format(day) + ' ' + format(hour) + ':' + format(minute) + ':' + format(second);
+	}
+    return time;
+}
+
+function createTable(key, value) {
+    var tbody = "";
+    $.each(value, function(k,v) {
+        var date = new Date(v.last);
+		var time = parseTime(date);	
+		s = host(v.area, v.name, v.address, v.rtt, v.failed, time, v.status);
+        tbody += s;
+    })
+    var tab ='<table class="table table-striped table-bordered table-hover">'+
+        '<caption style="padding-left:5px;">'+key+'</caption>'+
+        '<colgroup>'+
+            '<col style="width: 10%;">'+
+            '<col style="width: 25%;">'+
+            '<col style="width: 15%;">'+
+            '<col style="width: 20%;">'+
+            '<col style="width: 25%;">'+
+            '<col style="width: 5%;">'+
+        '</colgroup>'+
+        '<thead>'+
+            '<tr class="info">'+
+                '<th>area</th>'+
+                '<th>name</th>'+
+                '<th>address</th>'+
+                '<th>rtt or failed times</th>'+
+                '<th>update time</th>'+
+                '<th>status</th>'+
+            '</tr>'+
+        '</thead>'+
+        '<tbody class="status"></tbody>'+
+            tbody +
+        '</table>';
+    $("#groups").append(tab);
+}
+
+function numofall(groups) {
+    var up = 0;
+    var down = 0;
+    var total = 0;
+    $.each(groups, function(key, value) {
+        $.each(value, function(k,v) {
+            if (v.status) {
+                up += 1;
+            } else {
+                down += 1;
+            }
+            total += 1;
+        });
+    });
+    if (down > 0) {
+        $("#ood").html(down);
+        $("#oodp").show();
+    } else {
+        $("#oodp").hide();
+    }
+    var ooa = '<span style="color: seagreen; font-family: 宋体; font-size: 110%;">'+up+'</span>/<span style="font-weight: bold;">'+total+'</span>';
+    $("#ooa").html(ooa);
+}
+
+function addOption(groups) {
+    $("#areas").children().remove();
+    $("#areas").append('<option value="all" select="selected">全部</option>');
+    $.each(groups, function(key, value) {
+        var op = '<option value="'+value[0].areaID+'">'+key+'</option>';
+        $("#areas").append(op);
+    });
+}
+
+function refresh(area, first) {
+    $("#groups").html('');
+    var urlstr = 'status?callback=?';
+    if (area != "") {
+        urlstr += '&q='+area;
+    }
+    var sta = $.getJSON(urlstr, function(data) {
+        var groups = splitByArea(data);
+        $.each(groups, function(key, value) {
+            createTable(key, value);
+	    });
+        if (first) {
+            addOption(groups);
+            first = false;
+        }
+        $("#context").show();
+        numofall(groups);
+    })
+	sta.fail(function() {
+		$("#context").html('<p>错误：监控程序没有运行</p>'
+		);
+		$("#context").show();
+	});
+}
+
+function offline() {
+    $("#groups").html('');
+    var off = $.getJSON('status?callback=?', function(data) {
+        var groups = splitByArea(data);
+        $.each(groups, function(key, value) {
+            var tbody = "";
+            $.each(value, function(k, v) {
+                if (!v.status) {
+                    var date = new Date(v.last);
+		            var time = parseTime(date);	
+		            s = host(v.area, v.name, v.address, v.rtt, v.failed, time, v.status);
+                    tbody += s;
+                }
+            })
+            if (tbody != "") {
+                var tab ='<table class="table table-striped table-bordered table-hover">'+
+                    '<caption style="padding-left:5px;">'+key+'</caption>'+
+                    '<colgroup>'+
+                        '<col style="width: 10%;">'+
+                        '<col style="width: 25%;">'+
+                        '<col style="width: 15%;">'+
+                        '<col style="width: 20%;">'+
+                        '<col style="width: 25%;">'+
+                        '<col style="width: 5%;">'+
+                    '</colgroup>'+
+                    '<thead>'+
+                        '<tr class="info">'+
+                        '<th>area</th>'+
+                        '<th>name</th>'+
+                        '<th>address</th>'+
+                        '<th>rtt or failed times</th>'+
+                        '<th>update time</th>'+
+                        '<th>status</th>'+
+                        '</tr>'+
+                    '</thead>'+
+                    '<tbody class="status"></tbody>'+
+                        tbody +
+                '</table>';
+                $("#groups").append(tab);
+            }
+        })
+        $("#context").show();
+    })
+}
+
+$("#context").hide();
+
+$(document).ready(function() {
+    refresh('', true);
+    $("#areas").change(function() {
+        refresh($("#areas").val(), false);
+    });
+    $("#ood").click(function() {
+        offline();
+    });
+})
+</script>
+</body>
+</html>

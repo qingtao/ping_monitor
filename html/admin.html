@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="author" content="wuqingtao@sf-excodess.com">
+	<title>山东片区网络监控报警系统-管理</title>
+	<link href="static/bootstrap/css/bootstrap.min.css" rel="stylesheet"> 
+	<style>
+		body {
+			margin:0 auto;
+			padding-right: 15px;
+			padding-left: 15px;
+			font-family: 微软雅黑;
+			background-color: #fefefe;
+		}
+		
+		.margin_top {
+			margin-top: 66px;
+		}
+        .iborder-left {
+            border-left: 1px solid #e5e5e5;
+        }
+		.td_center {
+			text-align: center;
+            color: darkblue;
+		}
+        .custom-color {
+        }
+		input[type=number]::-webkit-inner-spin-button {
+			-webkit-appearance: none;
+		}
+
+        .custom_top {
+            margin-top: 20px;
+        }
+	</style>
+</head>
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="index.html"><strong>山东片区网络监控报警系统</strong></a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse pull-right">
+          <ul class="nav navbar-nav">    
+            <li><a href="index.html">最新</a></li>
+			<li class="active"><a href="admin.html">管理</a></li>
+            <li><a href="logs.html">日志</a></li>
+          </ul>
+        </div>
+    </div>
+</nav>
+<div class="container margin_top">
+	<legend id="title" style="margin-bottom: 0px; padding-left: 5px;">
+        配置管理
+    </legend>
+	<div class="row">
+        <div class="col-xs-2 text-center" style="font-size:120%; padding-top: 20px">
+            <button id="json" type="button" class="btn btn-sm btn-default btn-block">查看当前配置</button>
+            <button id="global" type="button" class="btn btn-sm btn-default btn-block">修改全局配置</button>
+            <button id="grouphosts" type="button" class="btn btn-sm btn-default btn-block">修改主机配置</button>
+        </div>
+        <div class="col-xs-10 iborder-left">
+            <div class="row" style="border-bottom: 1px solid #e5e5e5; padding: 15px 0 15px 0; margin: 0 0 15px -15px;">
+                <div class="col-xs-4">
+                    <p>监控进程：<span id="service"></span><span id="pid"></span></p>
+                </div>
+                <div class="col-xs-8 text-right">
+                    <button type="button" class="btn btn-sm btn-default" id="start" onclick="start()">启动</button>
+                    <button type="button" class="btn btn-sm btn-default" id="stop" disabled="disabled" onclick="stop()">停止</button>
+                </div>
+            </div>
+            <div class="row" style="padding: 15px 0 0 0; margin: 0 0 15px -15px;">
+                <div class="col-xs-12" id="current" style="font-size: 1.1em; color: black;">
+                </div>
+                <div class="col-xs-12" id="setting">
+                    <form class="form-horizontal" role="form" name="config" id="config">
+                    <fieldset>
+                        <div class="row">
+                            <div class="col-xs-5 pull-right" style="color: green;">
+                                <p>注：</p>
+                                <p>1、初始时填充现有配置信息</p>
+                                <p>2、触发邮件报警间隔为:</p>
+                                <p>interval * times</p>
+                            </div>
+                            <div class="col-xs-5" style="margin-left: 10%;">
+							    <div class="form-group">
+                                    <label for="debug" class="control-label">debug</label>
+                                    <input type="text" placeholder="false" class="form-control" name="debug" id="debug" disabled="disabled">
+                                    <p class="help-block">打印调试日志, 不可修改</p>
+                                </div>
+                                <div class="form-group">
+                                    <label for="heartbeat" class="control-label">heartbeat</label>
+                                    <input type="text" placeholder="example.com" class="form-control" name="heartbeat" id="heartbeat" disabled="disabled">
+                                    <p class="help-block">请求指定域名的NS记录，检查自身网络状态，不可修改</p>
+                                </div>
+                                <div class="form-group">
+                                    <label for="interval" class="control-label">interval</label>
+                                    <input type="text" placeholder="20s" class="form-control" name="interval" id="interval">
+                                    <p class="help-block">检测间隔, 单位为：s，m, 默认30s</p>
+                                </div>
+                                <div class="form-group">
+                                    <label for="times" class="control-label">times</label>
+                                    <input type="number" placeholder="3" min="2" max="5" class="form-control" name="times" id="times">
+                                    <p class="help-block">失败次数, 默认3</p>
+                                </div>
+                                <div class="form-group">
+                                    <label for="relay_time" class="control-label">报警延时时间</label>
+                                    <input type="number" min="1" max="65535" placeholder="30" class="form-control" name="relay_time" id ="relay_time">
+                                    <div class="help-block">单位: 秒 1-60(默认30)</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="rcpt_to" class="control-label">收件人</label>
+                                    <input type="email" placeholder="to@example.com" class="form-control" name="rcpt_to" id="rcpt_to">
+                                    <div class="help-block">邮件地址格式：John &lt;john@example.com&gt;</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="mail_from" class="control-label">发件人</label>
+                                    <input type="email" placeholder="send@example.com" class="form-control" name="mail_from" id="mail_from">
+                                    <div class="help-block">邮件地址格式：John &lt;john@example.com&gt;</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="secret" class="control-label">密码</label>
+                                    <input type="password" placeholder="password" class="form-control" name="secret" id="secret">
+                                    <div class="help-block">如不修改密码，勿输入字符</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="secret_confirm" class="control-label">重复密码</label>
+                                    <input type="password" placeholder="password" class="form-control" name="secret_confirm" id="secret_confirm">
+                                    <div class="help-block"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="smtp_server" class="control-label">邮件服务器地址</label>
+                                    <input type="text" placeholder="mail.example.com" class="form-control" name="smtp_server" id="smtp_server">
+                                    <div class="help-block"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="smtp_port" class="control-label">邮件服务器端口</label>
+                                    <input type="number" min="1" max="65535" placeholder="25" class="form-control" name="smtp_port" id ="smtp_port">
+                                    <div class="help-block">smtp端口</div>
+                                    <button id="commitGlobal" type="button" class="btn btn-default" onclick="updateGlobal()">提交</button>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    </form>
+                </div>
+                <div class="col-xs-12" id="groupsconfig" style="font-size: 1.1em; color: black;">
+                    <div class="row">
+                        <div class="col-xs-5 pull-right">
+                            <div style="padding-top: 15px;">
+                                <span>Group：</span>
+                                <select name="areas" id="areas"></select>
+                            </div>
+                            <br />
+                            <div style="color: green; padding-top: 15px;">
+                                <p>注：</p>
+                                <p>选择要更新的分组时，自动填充现有配置信息</p>
+                            </div>
+                        </div>
+
+                        <div class="col-xs-5" style="margin-left: 10%;">
+                            <form class="form-horizontal" role="form" name="groupconfig" id="groupconfig">
+                            <fieldset>
+                                <div class="form-group">
+                                    <label for="area" class="control-label">area</label>
+                                    <input type="text" placeholder="area" class="form-control" name="grouparea" id="grouparea" disabled="disabled">
+                                    <div class="help-block">区域分组代码ID，不可新增或修改</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="name" class="control-label">name</label>
+                                    <input type="text" placeholder="name" class="form-control" name="groupname" id="groupname">
+                                    <div class="help-block">区域分组显示名称</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email" class="control-label">email</label>
+                                    <input type="email" placeholder="email" class="form-control" name="groupemail" id="groupemail">
+                                    <div class="help-block">邮件地址格式：John &lt;john@example.com&gt;</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hosts" class="control-label">名称地址</label>
+                                    <textarea class="form-control" form="config" rows="3" id="hosts"></textarea>
+                                    <div class="help-block">
+                                    每行一条主机信息:主机名称和地址用英文逗号","分隔
+                                    </div>
+                                    <button id="commitGroup" type="button" class="btn btn-default" onclick="updateGroup()">提交</button>
+                                </div>
+                            </fieldset>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="static/jquery.min.js"></script>
+<script src="static/jquery.validate.min.js"></script>
+<script src="static/bootstrap/js/bootstrap.min.js"></script>
+<script>
+var Timeout = 2000;
+function start() {
+    var start_proc = $.post("admin/process", {"todo": "start"});
+    start_proc.done(function() {
+        setTimeout(proc_status, Timeout);
+    });
+}
+
+function stop() {
+    var stop_proc = $.post("admin/process", {"todo": "stop"});
+    stop_proc.done(function() {
+        setTimeout(proc_status, Timeout);
+    });
+}
+
+function proc_status() {
+    var proc = $.get("admin/process", function(data) {
+        $("#service").html(data);
+        $("#start").attr("disabled", "disabled");
+        $("#stop").removeAttr("disabled");
+	},
+	"text"
+	);
+    proc.fail(function() {
+        $("#service").html("已停止");
+        $("#stop").attr("disabled", "disabled");
+        $("#start").removeAttr("disabled");
+    });
+}
+
+function updateGlobal() {
+    $(".help-block").css("color", "black");
+    var values = {};
+    values.interval = $("#interval").val();
+    values.times = $("#times").val();
+    
+    var reMail = /(.+)@(.+)\.(.+)/i;
+    values.mail_from = $("#mail_from").val();
+    if (!reMail.test(values.mail_from)) {
+        $("#mail_from+div").html("不是正确的EMAIL地址");
+        $("#mail_from+div").css("color", "red");
+        return;
+    }
+    values.secret = $("#secret").val();
+    if (values.secret != "" && values.secret.length < 6) {
+        $("#secret+div").html("密码位数小于6");
+        $("#secret+div").css("color", "red");
+        return;
+    }
+    var secret_confirm = $("#secret_confirm").val();
+    
+    if (values.secret != "" && values.secret != secret_confirm) {
+        $("#secret_confirm+div").html("密码不一致");
+        $("#secret_confirm+div").css("color", "red");
+        return;
+    }
+    values.rcpt_to = $("#rcpt_to").val();
+    if (!reMail.test(values.rcpt_to)) {
+        $("#rcpt_to+div").html("不是正确的EMAIL地址");
+        $("#rcpt_to+div").css("color", "red");
+        return;
+    }
+    values.smtp_server = $("#smtp_server").val();
+    var res = /(.+)\.(.+)\.(.+)/i
+    if (!res.test(values.smtp_server)) {
+        $("#smtp_server+div").html("邮件服务器服务器地址无效");
+        $("#smtp_server+div").css("color", "red");
+        return;
+    }
+    var rep = /\d{1,5}/
+    values.smtp_port = $("#smtp_port").val();
+    if (!rep.test(values.smtp_port)) {
+        $("#smtp_port+div").html("邮件服务器端口无效");
+        $("#smtp_port+div").css("color", "red");
+        return;
+    }
+    var regg = /\d{1,2}/
+    values.relay_time = $("#relay_time").val();
+    if (!regg.test(values.relay_time)) {
+        $("#relay_time+div").html("邮件发送延时时间无效");
+        $("#relay_time+div").css("color", "red");
+        return;
+    }	
+	var setGlobalcfg = $.post("admin/setting/global", values, null, "json");
+    setGlobalcfg.done(function(data) {
+        alert("全局配置已保存成功");
+    });
+    setGlobalcfg.fail(function(data) {
+        alert("更新全局参数失败");
+    });
+}
+
+function updateGroup() {
+    $(".help-block").css("color", "black");
+    var values = {};
+    values.area = $("#grouparea").val();
+    values.name = $("#groupname").val();
+    values.email = $("#groupemail").val();
+    $("#hosts").val($("#hosts").val().replace("/\s*/g", ""));
+    values.hosts = $("#hosts").val();
+    if (values.hosts.length < 1) {
+        $("#hosts+div").css("color", "red");
+        return;
+    };
+    var setGroupcfg = $.post("admin/setting/group", values, null, "json");
+    var str = '更新主机组'
+    setGroupcfg.done(function(data) {
+        str += '[成功]\narea: ' + values.area + '\nname: ' + values.name;
+        alert(str);
+    });
+    setGroupcfg.fail(function(data) {
+        str += '[失败] area: ' + values.area + ' name: ' + values.name;
+        var err = JSON.stringify(data.responseText);
+        str += '\n' + err;
+        alert(str);
+    });
+}
+
+function parseGroups(groups) {
+    var gs = '';
+    var str = '';
+    var len = 0;
+    $.each(groups, function(key, value) {
+        var length = value.hosts.length;
+        str += '<th class="td_center" rowspan="'+Number(2+length)+'">'+key+'</th>';
+        str += '<td class="td_center custom-color">name</td><td class="custom-color" colspan="3">'+value.name+'</td></tr>';
+        str += '<tr><td class="td_center">email</td><td colspan="3">'+replace(value.email)+'</td></tr>';
+        str += '<tr><td class="td_center" rowspan="'+length+'">hosts</td>';
+        var hosts = value.hosts;
+        $.each(hosts, function(i) {
+            str += '<td>'+hosts[i].name+'</td><td colspan="2">'+hosts[i].address+'</td></tr>';
+        });
+        len = Number(len+3+length);
+    })
+    gs += '<tr><th class="td_center" rowspan="'+len+'">groups</th>';
+    gs += str;
+    gs += '</tr>';
+    return gs;
+}
+
+function replace(s) {
+        return s.replace(/<(.+)>/, '&lt;$1&gt;'); 
+}
+
+function chooseArea(area) {
+    $("#commitGroup").addClass("disabled");
+    var url = "admin/setting?callback=?&g=groups";
+    if (area != "" && area != undefined) {
+        url += '&areaid='+area;
+    } else {
+        return
+    }
+    var insertGroup = $.getJSON(url, function(data) { 
+            $("#grouparea").val(data.area);
+            $("#groupname").val(data.name);
+            $("#groupemail").val(data.email);
+            var hosts = ""
+            for (i=0;i<data.hosts.length;i++) {
+                hosts += data.hosts[i].name+','+data.hosts[i].address+'\n';
+            }
+            $("#hosts").attr("rows", data.hosts.length+1);
+            $("#hosts").val(hosts);
+        })
+        $("#groupsconfig").show();
+        $("#current").hide();
+        $("#setting").hide();
+        $("#commitGroup").removeClass("disabled");
+
+        insertGroup.fail(function() {
+            $("#setting").html('<p>获取主机分组信息失败</p>');
+        });
+
+}
+
+$(document).ready(function() {
+    $(".iborder-left").height($(document.body).height());
+    $("#groupsconfig").hide();
+    $("#setting").hide();
+	$("#json").click(function() {
+        $("#groupsconfig").hide();
+		$("#setting").hide();
+		$("#current").show();
+		var cfg = $.get("admin/setting",
+			function(data) {
+                var str = '<table class="table table-condensed table-bordered">';
+                var jscfg = $.parseJSON(data);
+                
+                var glob = jscfg.global;
+                str += '<tr><th class="td_center">debug</th><td colspan="5">' + glob.debug + "</td></tr>"
+                str += '<tr><th class="td_center">heartbeat</th><td colspan="5">' + glob.heartbeat + "</td></tr>"
+                str += '<tr><th class="td_center">interval</th><td colspan="5">' + glob.interval + "</td></tr>"
+                str += '<tr><th class="td_center">times</th><td colspan="5">' + glob.times + "</td></tr>"
+                str += '<tr><th class="td_center">relay_time</th><td colspan="5">' + glob.relay_time + "秒</td></tr>"
+                
+                str += '<tr><th class="td_center" rowspan="5">mail</th>'
+                str += '<td class="td_center">rcpt_to</td><td colspan="4">' + replace(glob.mail.rcpt_to) + "</td></tr>"
+                str += '<td class="td_center">mail_from</td><td colspan="4">' + replace(glob.mail.mail_from) + "</td>"
+                str += "</tr>"
+                str += '<td class="td_center">secret</td><td colspan="4">' + glob.mail.secret + "</td></tr>"
+                str += '<td class="td_center">smtp_server</td><td colspan="4">' + glob.mail.smtp_server + "</td></tr>"
+                str += '<td class="td_center">smtp_port</td><td colspan="4">' + glob.mail.smtp_port + "</td></tr>"
+                str += parseGroups(jscfg.groups);
+                str += "</table>"
+                $("#current").html(str);
+                $(".td_center").css("vertical-align", "middle");
+            },
+            "text"
+        );
+        cfg.fail(function() {
+            $("#current").html('<p>获取配置失败</p>')
+        });
+    });
+	
+    $("#global").click(function() {
+        var setGlobal = $.getJSON("admin/setting?callback=?&g=global",
+            function(data) {
+                $("#debug").val(data.debug);
+                $("#heartbeat").val(data.heartbeat);
+                $("#interval").val(data.interval);
+                $("#times").val(data.times);
+                var mail = data.mail;
+                $("#mail_from").val(mail.mail_from);
+                $("#secret").val("");
+                $("#rcpt_to").val(mail.rcpt_to);
+                $("#smtp_server").val(mail.smtp_server);
+                $("#smtp_port").val(mail.smtp_port);
+                $("#relay_time").val(data.relay_time);
+        });
+        $("#groupsconfig").hide();
+        $("#current").hide();
+        $("#setting").show();
+
+        setGlobal.fail(function() {
+            $("#setting").html('<p>获取全局配置失败</p>');
+        });
+    });
+    $("#grouphosts").click(function() {
+        $("#commitGroup").addClass("disabled");
+        var setGroups = $.getJSON("admin/setting?callback=?&g=groups",
+            function(data) {
+                $("#areas").children().remove();
+                $("#areas").append('<option value="" select="selected">选择</option>');
+                $.each(data, function(k,v) {
+                    var op = '<option value="'+k+'">'+v.name+'</option>';
+                    $("#areas").append(op);
+            });
+            $("#grouparea").val("");
+            $("#groupname").val("");
+            $("#groupemail").val("");
+            $("#hosts").attr("rows", "2");
+            $("#hosts").val("");
+        })
+        $("#groupsconfig").show();
+        $("#current").hide();
+        $("#setting").hide();
+
+        setGroups.fail(function() {
+            $("#setting").html('<p>获取主机分组信息失败</p>');
+        });
+    });
+
+    $("#areas").change(function() {
+        var areaid = $("#areas").val();
+        chooseArea(areaid);
+    });
+    proc_status();
+	$("button").addClass("active")
+})
+</script>
+</body>
+</html>
